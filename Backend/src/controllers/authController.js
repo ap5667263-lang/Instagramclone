@@ -217,30 +217,22 @@ const forgotPassword = async (req, res) => {
 
 const resetPassword = async (req, res) => {
     try {
-        const { userId, otp, newPassword } = req.body;
+        const { resetToken, newPassword } = req.body;
 
-        if (!userId || !otp || !newPassword) {
-            return res.status(400).json({ message: "userId, otp and newPassword are required" });
+        if (!resetToken || !newPassword) {
+            return res.status(400).json({ message: "resetToken and newPassword are required" });
         }
 
         if (newPassword.length < 6) {
             return res.status(400).json({ message: "Password must be at least 6 characters" });
         }
 
-        const otpRecord = await Otp.findOne({ userId, otp, purpose: "password_reset" });
-        if (!otpRecord) {
-            return res.status(400).json({ message: "Invalid OTP" });
-        }
-
-        if (otpRecord.expiresAt < new Date()) {
-            await Otp.deleteOne({ _id: otpRecord._id });
-            return res.status(400).json({ message: "OTP has expired" });
-        }
+        // Verify reset token
+        const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+        const userId = decoded.id;
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await User.findByIdAndUpdate(userId, { password: hashedPassword });
-
-        await Otp.deleteOne({ _id: otpRecord._id });
 
         res.status(200).json({ message: "Password reset successfully" });
 

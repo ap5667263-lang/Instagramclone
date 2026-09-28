@@ -72,6 +72,12 @@ const verifyOTP = async (req, res) => {
         // Delete OTP after successful verification
         await Otp.deleteOne({ _id: otpRecord._id });
 
+        // For password_reset — generate a short-lived reset token
+        if (purpose === 'password_reset') {
+            const resetToken = require('../utils/generateToken')(userId, '15m');
+            return res.status(200).json({ message: "OTP verified successfully", resetToken });
+        }
+
         res.status(200).json({ message: "OTP verified successfully" });
 
     } catch (error) {

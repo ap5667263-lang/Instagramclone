@@ -1,6 +1,8 @@
-const transporter = require('../config/email');
+const createTransporter = require('../config/email');
 
 const sendOTPEmail = async (toEmail, otp) => {
+    const transporter = createTransporter();
+
     const mailOptions = {
         from: `"Instagram" <${process.env.EMAIL_USER}>`,
         to: toEmail,
